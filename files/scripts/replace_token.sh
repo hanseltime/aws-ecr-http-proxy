@@ -6,7 +6,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 
 TOKEN=$1
 
-CONFIG=$($SCRIPT_DIR/get-config.sh)
+CONFIG=$($SCRIPT_DIR/get-config.sh "auth")
 
 if [ -z "$TOKEN" ]; then
     echo "Must supply a non-empty token!"

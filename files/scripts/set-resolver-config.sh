@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
 ############################################################################
 #
@@ -9,7 +9,7 @@
 #
 ############################################################################
 
-confpath=/etc/nginx/resolvers.conf
+confpath=$(${SCRIPT_DIR}/get-config.sh "resolvers")
 
 if [ ! -z "$RESOLVER" ]; then
     echo "Using environment based RESOLVER ($RESOLVER) and skipping aligning to machine config!"
@@ -37,7 +37,6 @@ for ONE_RESOLVER in ${RESOLVERS}; do
 done
 
 echo "Final chosen resolver: $conf"
-confpath=/etc/nginx/resolvers.conf
 if [ ! -e $confpath ]
 then
     echo "Using auto-determined resolver '$conf' via '$confpath'"

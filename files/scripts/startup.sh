@@ -11,6 +11,11 @@ if [ -z "$UPSTREAM" ] ; then
   exit 1
 fi
 
+if [ -z "$PULL_THROUGHS" ]; then
+  echo "PULL_THROUGHS not set."
+  exit 1
+fi
+
 if [ -z "$PORT" ] ; then
   echo "PORT not set."
   exit 1
@@ -31,36 +36,33 @@ fi
 # Setup resolvers
 $SCRIPT_DIR/set-resolver-config.sh
 
+# Setup Logging directory
+if [ ! -d /var/log/nginx ]; then
+  mkdir /var/log/nginx
+fi
 
-CACHE_MAX_SIZE=${CACHE_MAX_SIZE:-75g}
+export CACHE_MAX_SIZE=${CACHE_MAX_SIZE:-75g}
 echo Using cache max size $CACHE_MAX_SIZE
 
-CACHE_KEY=${CACHE_KEY:='$uri'}
+export CACHE_KEY=${CACHE_KEY:='$uri'}
 echo Using cache key $CACHE_KEY
 
-SCHEME=http
-CONFIG=/usr/local/openresty/nginx/conf/nginx.conf
+export SCHEME=http
+CONFIG=$(${SCRIPT_DIR}/get-config.sh "main")
 SSL_CONFIG=/usr/local/openresty/nginx/conf/ssl.conf
 
 if [ "$ENABLE_SSL" ]; then
   sed -i -e s!REGISTRY_HTTP_TLS_CERTIFICATE!"$REGISTRY_HTTP_TLS_CERTIFICATE"!g $SSL_CONFIG
   sed -i -e s!REGISTRY_HTTP_TLS_KEY!"$REGISTRY_HTTP_TLS_KEY"!g $SSL_CONFIG
-  SSL_LISTEN="ssl"
-  SSL_INCLUDE="include $SSL_CONFIG;"
-  SCHEME="https"
+  export SSL_LISTEN="ssl"
+  export SSL_INCLUDE="include $SSL_CONFIG;"
+  export SCHEME="https"
 fi
 
-# Update nginx config
-sed -i -e s!UPSTREAM!"$UPSTREAM"!g $CONFIG
-sed -i -e s!PORT!"$PORT"!g $CONFIG
-sed -i -e s!CACHE_MAX_SIZE!"$CACHE_MAX_SIZE"!g $CONFIG
-sed -i -e s!CACHE_KEY!"$CACHE_KEY"!g $CONFIG
-sed -i -e s!SCHEME!"$SCHEME"!g $CONFIG
-sed -i -e s!SSL_INCLUDE!"$SSL_INCLUDE"!g $CONFIG
-sed -i -e s!SSL_LISTEN!"$SSL_LISTEN"!g $CONFIG
+export LOG_LEVEL=debug
 
-# Update health-check
-sed -i -e s!PORT!"$PORT"!g /health-check.sh
+# Update the base config
+${SCRIPT_DIR}/replace-keys-in.sh $CONFIG
 
 # setup ~/.aws directory
 AWS_FOLDER='/root/.aws'
@@ -82,10 +84,23 @@ fi
 chmod 600 -R ${AWS_FOLDER}
 
 set +x
-# Get The ECR token initially
+# Get The ECR token initially and store it in the referenced config
 TOKEN=$(aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken')
 $SCRIPT_DIR/replace_token.sh "$TOKEN"
 set -x
+
+# Create an array by splitting the string
+# Set IFS to comma
+IFS=',' read -ra array <<< "$PULL_THROUGHS"
+
+# Create a new mirror server for each pull through element
+for pull_through_compound in "${array[@]}"; do
+    # Get PORT and Pull Through
+    IFS=':' read -ra parts <<< "$pull_through_compound"
+    pull_through="${parts[0]}"
+    port="${parts[1]}"
+    $SCRIPT_DIR/create-mirror-server.sh $UPSTREAM $pull_through $port
+done
 
 # make sure cache directory has correct ownership
 chown -R nginx:nginx /cache

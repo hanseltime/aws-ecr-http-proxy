@@ -1,0 +1,9 @@
+{
+  "insecure-registries": [
+    "http://host.docker.internal:5000"
+  ],
+  "registry-mirrors": [
+    "http://host.docker.internal:5000"
+  ],
+  "debug": true
+}
