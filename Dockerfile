@@ -1,16 +1,22 @@
-FROM openresty/openresty:1.19.9.1-12-alpine
+FROM openresty/openresty:1.19.9.1-12-bullseye
 
 USER root
 
-RUN apk add -v --no-cache bind-tools python3 py-pip py3-urllib3 py3-colorama supervisor \
- && mkdir /cache \
- && addgroup -g 110 nginx \
- && adduser -u 110  -D -S -h /cache -s /sbin/nologin -G nginx nginx \
- && pip install --upgrade pip awscli==1.11.183 \
- && apk -v --purge del py-pip
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    apt-get install -y supervisor curl unzip cron
 
-COPY files/startup.sh files/renew_token.sh files/health-check.sh  /
-COPY files/ecr.ini /etc/supervisor.d/ecr.ini
+RUN mkdir /cache \
+ && groupadd -g 110 nginx \
+ && useradd -u 110 -M -s /sbin/nologin -g nginx -d /cache -c "Nginx user" nginx
+
+ # Install AWS V2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip" \
+ && unzip awscliv2.zip \
+ && ./aws/install
+
+COPY files/startup.sh files/renew_token.sh files/health-check.sh files/get-config.sh files/replace_token.sh  /
+COPY files/ecr.ini /etc/supervisord.conf
 COPY files/root /etc/crontabs/root
 
 COPY files/nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
