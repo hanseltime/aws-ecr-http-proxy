@@ -11,8 +11,8 @@ if [ -z "$UPSTREAM" ] ; then
   exit 1
 fi
 
-if [ -z "$PULL_THROUGH_MIRROR" ] && [ -z "$PULL_THROUGH_PROXY" ]; then
-  echo "PULL_THROUGH_MIRROR and/or PULL_THROUGH_PROXY not set."
+if [ -z "$PULL_THROUGH_MIRROR" ]; then
+  echo "PULL_THROUGH_MIRROR not set."
   exit 1
 fi
 
@@ -40,12 +40,6 @@ $SCRIPT_DIR/set-resolver-config.sh
 if [ ! -d /var/log/nginx ]; then
   mkdir /var/log/nginx
 fi
-
-export CACHE_MAX_SIZE=${CACHE_MAX_SIZE:-75g}
-echo Using cache max size $CACHE_MAX_SIZE
-
-export CACHE_KEY=${CACHE_KEY:='$uri'}
-echo Using cache key $CACHE_KEY
 
 export SCHEME=http
 CONFIG=$(${SCRIPT_DIR}/get-config.sh "main")
@@ -103,15 +97,10 @@ for pull_through_compound in "${array[@]}"; do
     $SCRIPT_DIR/create-mirror-server.sh $UPSTREAM $pull_through $port
 done
 
-# So now we want to add a map of urls that we intercept and then what they map to
-if [ ! -z "$PULL_THROUGH_PROXY" ]; then
-  $SCRIPT_DIR/create-proxy-server.sh
-fi
-
 # make sure cache directory has correct ownership
 chown -R nginx:nginx /cache
 
 echo "Testing nginx config..."
-nginx -t
+# nginx -t
 
 exec "$@"

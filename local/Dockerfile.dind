@@ -1,0 +1,6 @@
+FROM docker:dind
+
+RUN mkdir /etc/containerd 
+
+COPY containerd/ /etc/containerd/
+RUN containerd config default > /etc/containerd/config.toml

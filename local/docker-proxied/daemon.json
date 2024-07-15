@@ -1,0 +1,8 @@
+{
+  "proxies": {
+    "http-proxy": "http://host.docker.internal:80",
+    "https-proxy": "https://host.docker.internal:443",
+    "no-proxy": ""
+  },
+  "debug": true
+}

@@ -98,11 +98,11 @@ In order to test, it is recommended that you, bring up both containers and then 
 ```shell
 # After making sure AWS environment variables on on the shell
 
-UPSTREAM="https://<your account>.dkr.ecr.us-east-1.amazonaws.com" PULL_THROUGH=ecr-public-docker ./local/local-deploy.sh
+UPSTREAM="https://<your account>.dkr.ecr.us-east-1.amazonaws.com" PULL_THROUGH_MIRROR=ecr-public-docker:5000 ./local/local-deploy.sh
 ./
 
 
-docker exec -it test-docker-daemon /bin/bash
+docker exec -it dind-test /bin/sh
 
 # in the container shell - run your docker containers
 docker run -it alpine

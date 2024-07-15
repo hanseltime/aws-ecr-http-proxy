@@ -12,7 +12,7 @@
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}") 
 
 export UPSTREAM=$1
-export PULL_THROUGH=$2
+export PULL_THROUGH_TOKEN=$2
 export PORT=$3
 
 if [ -z "$UPSTREAM" ]; then
@@ -20,8 +20,8 @@ if [ -z "$UPSTREAM" ]; then
     exit 1
 fi
 
-if [ -z "$PULL_THROUGH" ]; then
-    echo "Must supply non-empty PULL_THROUGH argument"
+if [ -z "$PULL_THROUGH_TOKEN" ]; then
+    echo "Must supply non-empty PULL_THROUGH_TOKEN argument"
     exit 1
 fi
 
@@ -30,35 +30,20 @@ if [ -z "$PORT" ]; then
     exit 1
 fi
 
-ecr_pull_throughs=("ecr-public" "ecr-public-docker" "kubernetes" "quay" "docker-hub" "github" "azure")
+# export the target pull through for the template - will fail if unmapped
+export PULL_THROUGH=$($SCRIPT_DIR/pull-through-info.sh $PULL_THROUGH_TOKEN "target")
+export PULL_THROUGH_LIB=$($SCRIPT_DIR/pull-through-info.sh $PULL_THROUGH_TOKEN "libtarget")
 
-found=false
-for element in "${ecr_pull_throughs[@]}"; do
-    if [ "$element" == "$PULL_THROUGH" ]; then
-        found=true
-        break
-    fi
-done
 
-if [ "$found" == "false" ]; then
-  echo "Unsupported ECR Pull through cache ${PULL_THROUGH}"
-  exit 1
-fi
-
-echo "Creating Mirror Server for $PULL_THROUGH"
+echo "Creating Mirror Server for $PULL_THROUGH_TOKEN"
 
 CONF_DIR=$($SCRIPT_DIR/get-config.sh "dir")
 PULL_THROUGH_TEMPLATE=$($SCRIPT_DIR/get-config.sh "mirror-template")
 CONF=$($SCRIPT_DIR/get-config.sh "main")
 
-pull_through_config="$CONF_DIR/mirror-${PULL_THROUGH}.conf"
+pull_through_config="$CONF_DIR/mirror-${PULL_THROUGH_TOKEN}.conf"
 
 cp $PULL_THROUGH_TEMPLATE $pull_through_config
-
-# For ecr-public docker we use a different look up "ecr-public/docker"
-if [ "$PULL_THROUGH" == "ecr-public-docker" ]; then
-    export PULL_THROUGH="ecr-public/docker"
-fi
 
 $SCRIPT_DIR/replace-keys-in.sh "$pull_through_config"
 

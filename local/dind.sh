@@ -11,6 +11,8 @@
 
 SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}") 
 
-docker run --privileged --name test-docker-daemon -d \
-    -v ${SCRIPT_DIR}/docker:/etc/docker \
-	docker:dind
+docker build -f ${SCRIPT_DIR}/Dockerfile.dind -t local/docker-dind $SCRIPT_DIR --progress=plain 
+
+docker run --privileged -d --name dind-test \
+  -v ${SCRIPT_DIR}/docker:/etc/docker \
+  local/docker-dind

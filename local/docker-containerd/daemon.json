@@ -1,0 +1,8 @@
+{
+    "runtimes": {
+        "containerd": {
+          "path": "/usr/local/bin/containerd"
+        }
+      },
+    "default-runtime": "containerd"
+}
