@@ -11,8 +11,8 @@ if [ -z "$UPSTREAM" ] ; then
   exit 1
 fi
 
-if [ -z "$PULL_THROUGHS" ]; then
-  echo "PULL_THROUGHS not set."
+if [ -z "$PULL_THROUGH_MIRROR" ] && [ -z "$PULL_THROUGH_PROXY" ]; then
+  echo "PULL_THROUGH_MIRROR and/or PULL_THROUGH_PROXY not set."
   exit 1
 fi
 
@@ -91,7 +91,7 @@ set -x
 
 # Create an array by splitting the string
 # Set IFS to comma
-IFS=',' read -ra array <<< "$PULL_THROUGHS"
+IFS=',' read -ra array <<< "$PULL_THROUGH_MIRROR"
 
 # Create a new mirror server for each pull through element
 for pull_through_compound in "${array[@]}"; do
@@ -99,10 +99,19 @@ for pull_through_compound in "${array[@]}"; do
     IFS=':' read -ra parts <<< "$pull_through_compound"
     pull_through="${parts[0]}"
     port="${parts[1]}"
+    # Setup the mirrors
     $SCRIPT_DIR/create-mirror-server.sh $UPSTREAM $pull_through $port
 done
 
+# So now we want to add a map of urls that we intercept and then what they map to
+if [ ! -z "$PULL_THROUGH_PROXY" ]; then
+  $SCRIPT_DIR/create-proxy-server.sh
+fi
+
 # make sure cache directory has correct ownership
 chown -R nginx:nginx /cache
+
+echo "Testing nginx config..."
+nginx -t
 
 exec "$@"

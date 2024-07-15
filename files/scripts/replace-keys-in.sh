@@ -17,6 +17,9 @@ fi
 
 RESOLVERS_PATH=$($SCRIPT_DIR/get-config.sh "resolvers")
 AUTH_CONF_PATH=$($SCRIPT_DIR/get-config.sh "auth")
+INTERCEPT_MAP_PATH=$($SCRIPT_DIR/get-config.sh "intercepts")
+TARGET_MAP_PATH=$($SCRIPT_DIR/get-config.sh "targets")
+VERIFY_SSL_PATH=$($SCRIPT_DIR/get-config.sh "verify-ssl")
 
 sed -i -e s!UPSTREAM!"$UPSTREAM"!g $CONFIG
 sed -i -e s!PULL_THROUGH!"$PULL_THROUGH"!g $CONFIG

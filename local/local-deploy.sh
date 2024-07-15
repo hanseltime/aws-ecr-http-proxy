@@ -20,7 +20,7 @@ docker run -d --name docker-registry-proxy \
   -e AWS_REGION="${AWS_REGION}" \
   -e AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}" \
   -e CACHE_MAX_SIZE=100g \
-  -e PULL_THROUGHS=ecr-public-docker:5000 \
+  -e PULL_THROUGH_MIRROR=ecr-public-docker:5000 \
   local/docker-proxy
 
 # TODO - if you would like to run this locally with https, feel free to contribute back a reliable pattern
